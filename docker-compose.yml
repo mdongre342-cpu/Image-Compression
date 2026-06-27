@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Main application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: compress-compare-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-compress-compare-dev-secret-2025}
+      - DATA_DIR=/app/data
+    volumes:
+      # Persist database and user files
+      - app-data:/app/data
+      # Optional: mount logs
+      - app-logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - compress-network
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  # Named volume for persistent data
+  app-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  
+  app-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+
+networks:
+  compress-network:
+    driver: bridge
+
+# Configuration for production deployment
+# Uncomment to enable reverse proxy with Nginx
+# services:
+#   nginx:
+#     image: nginx:alpine
+#     container_name: compress-compare-nginx
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     volumes:
+#       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#       - ./ssl:/etc/nginx/ssl:ro
+#     depends_on:
+#       - app
+#     networks:
+#       - compress-network

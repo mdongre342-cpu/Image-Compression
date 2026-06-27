@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Compress & Compare — interactive image and 3D compression tool." />
+  <title>Compress & Compare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles-v2.css" />
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <!-- ── HEADER ─────────────────────────────────────────── -->
+  <header class="hdr" role="banner">
+    <div class="hdr-inner">
+      <div class="logo">
+        <span class="logo-icon" aria-hidden="true">⬡</span>
+        <div>
+          <span class="logo-title">Compress&amp;Compare</span>
+          <span class="logo-sub">Image &amp; 3D Compression Lab</span>
+        </div>
+      </div>
+      <nav class="hdr-actions" aria-label="Header actions">
+        <button class="icon-btn" id="historyToggleBtn" title="Compression History" aria-label="Toggle history panel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.05"/></svg>
+        </button>
+        <button class="icon-btn" id="analyticsBtn" title="Analytics" aria-label="View analytics">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </button>
+        <button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle light/dark mode">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── HISTORY PANEL ──────────────────────────────────── -->
+  <aside class="side-panel" id="historyPanel" aria-label="Compression history" hidden>
+    <div class="side-panel-header">
+      <h2>History</h2>
+      <button class="icon-btn" id="closeHistoryBtn" aria-label="Close history">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="side-panel-body" id="historyList">
+      <p class="empty-state">No compressions yet.<br/>Upload an image and compress it.</p>
+    </div>
+    <div class="side-panel-footer">
+      <button class="btn btn-ghost btn-sm" id="clearHistoryBtn">Clear All</button>
+      <button class="btn btn-primary btn-sm" id="exportHistoryBtn">Export Report</button>
+    </div>
+  </aside>
+
+  <!-- ── ANALYTICS PANEL ────────────────────────────────── -->
+  <aside class="side-panel" id="analyticsPanel" aria-label="Analytics" hidden>
+    <div class="side-panel-header">
+      <h2>Analytics</h2>
+      <button class="icon-btn" id="closeAnalyticsBtn" aria-label="Close analytics">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="side-panel-body" id="analyticsContent">
+      <p class="empty-state">Compress images to see analytics.</p>
+    </div>
+  </aside>
+  <div class="panel-overlay" id="panelOverlay" hidden></div>
+
+  <!-- ── MAIN ───────────────────────────────────────────── -->
+  <main id="main">
+
+    <!-- UPLOAD ZONE -->
+    <section class="upload-zone-wrap" id="uploadSection">
+      <div class="upload-zone" id="uploadArea" role="button" tabindex="0" aria-label="Click or drag a file to upload">
+        <div class="upload-zone-bg" aria-hidden="true"></div>
+        <div class="upload-zone-content">
+          <div class="upload-icon-wrap" aria-hidden="true">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <h2>Drop file here</h2>
+          <p>or <span class="upload-link">browse</span> to upload</p>
+          <div class="upload-tags">
+            <span class="tag">JPG</span><span class="tag">PNG</span><span class="tag">WebP</span>
+            <span class="tag">OBJ</span><span class="tag">STL</span><span class="tag">PLY</span>
+            <span class="tag tag-muted">max 50 MB</span>
+          </div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*,.obj,.stl,.ply" hidden aria-label="File input" />
+      </div>
+    </section>
+
+    <!-- WORKSPACE (shown after file upload) -->
+    <section class="workspace" id="workspaceSection" hidden>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <div class="mode-tabs" role="tablist" aria-label="Operation mode">
+          <button class="tab active" id="compressMode" role="tab" aria-selected="true" aria-controls="compressPanel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="21" y2="3"/><line x1="3" y1="21" x2="14" y2="10"/></svg>
+            Compress
+          </button>
+          <button class="tab" id="decompressMode" role="tab" aria-selected="false" aria-controls="decompressPanel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 4 14 4 14 10"/><polyline points="4 20 10 20 10 14"/><line x1="14" y1="4" x2="3" y2="15"/><line x1="21" y1="21" x2="10" y2="10"/></svg>
+            Decompress
+          </button>
+          <button class="tab" id="threedMode" role="tab" aria-selected="false" aria-controls="threedPanel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            3D
+          </button>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-ghost btn-sm" id="resetBtn" aria-label="Upload new file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.05"/></svg>
+            New File
+          </button>
+        </div>
+      </div>
+
+      <!-- LAYOUT: SIDEBAR + CANVAS -->
+      <div class="workspace-grid">
+
+        <!-- SIDEBAR CONTROLS -->
+        <aside class="ctrl-sidebar" aria-label="Compression controls">
+
+          <!-- COMPRESS PANEL -->
+          <div class="ctrl-panel" id="compressPanel" role="tabpanel">
+            <div class="ctrl-section">
+              <label class="ctrl-label" for="compressionType">Algorithm</label>
+              <select id="compressionType" class="ctrl-select">
+                <option value="jpeg">JPEG Quality</option>
+                <option value="webp">WebP</option>
+                <option value="avif">AVIF (Next-Gen)</option>
+                <option value="progressive">Progressive JPEG</option>
+                <option value="chroma">Chroma Subsampling</option>
+                <option value="quantize">Color Quantization</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="dithering">Floyd-Steinberg Dithering</option>
+                <option value="rle">Run-Length Encoding</option>
+                <option value="kmeans">K-means Clustering</option>
+                <option value="resize">Resize &amp; Compress</option>
+              </select>
+            </div>
+
+            <div class="ctrl-section">
+              <label class="ctrl-label">Quick Presets</label>
+              <div class="preset-grid">
+                <button class="preset-btn" data-preset="web" type="button">🌐 Web</button>
+                <button class="preset-btn" data-preset="thumbnail" type="button">🖼 Thumb</button>
+                <button class="preset-btn" data-preset="highQuality" type="button">⭐ HQ</button>
+                <button class="preset-btn" data-preset="lowSize" type="button">📦 Low Size</button>
+              </div>
+            </div>
+
+            <div class="ctrl-section">
+              <label class="ctrl-label" for="qualitySlider">
+                Quality <span class="ctrl-value" id="qualityValue">80</span>%
+              </label>
+              <input type="range" id="qualitySlider" class="ctrl-range" min="1" max="100" value="80" aria-valuemin="1" aria-valuemax="100" />
+            </div>
+
+            <div class="ctrl-section" id="resizeControls" hidden>
+              <label class="ctrl-label" for="resizePercent">
+                Resize <span class="ctrl-value" id="resizeValue">100</span>%
+              </label>
+              <input type="range" id="resizePercent" class="ctrl-range" min="10" max="100" value="100" aria-valuemin="10" aria-valuemax="100" />
+            </div>
+
+            <button class="btn btn-primary btn-full" id="compressBtn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="21" y2="3"/><line x1="3" y1="21" x2="14" y2="10"/></svg>
+              Apply Compression
+            </button>
+          </div>
+
+          <!-- DECOMPRESS PANEL -->
+          <div class="ctrl-panel" id="decompressPanel" role="tabpanel" hidden>
+            <div class="ctrl-section">
+              <label class="ctrl-label" for="decompressionType">Decompress Mode</label>
+              <select id="decompressionType" class="ctrl-select">
+                <option value="auto">Auto-Detect</option>
+                <option value="rle">RLE Decompress</option>
+                <option value="kmeans">K-means Decompress</option>
+                <option value="quantize">Dequantize Colors</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-full" id="decompressBtn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 4 14 4 14 10"/><polyline points="4 20 10 20 10 14"/><line x1="14" y1="4" x2="3" y2="15"/><line x1="21" y1="21" x2="10" y2="10"/></svg>
+              Apply Decompression
+            </button>
+          </div>
+
+          <!-- 3D PANEL -->
+          <div class="ctrl-panel" id="threedPanel" role="tabpanel" hidden>
+            <div class="ctrl-section">
+              <label class="ctrl-label" for="threedType">3D Algorithm</label>
+              <select id="threedType" class="ctrl-select">
+                <option value="mesh">Mesh Simplification</option>
+                <option value="pointcloud">Point Cloud Decimation</option>
+              </select>
+            </div>
+            <div class="ctrl-section">
+              <label class="ctrl-label">3D Presets</label>
+              <div class="preset-grid">
+                <button class="preset-btn" onclick="apply3DPreset('web')" type="button">📱 Web</button>
+                <button class="preset-btn" onclick="apply3DPreset('mobile')" type="button">📲 Mobile</button>
+                <button class="preset-btn" onclick="apply3DPreset('highQuality')" type="button">⭐ HQ</button>
+                <button class="preset-btn" onclick="apply3DPreset('thumbnail')" type="button">📷 Thumb</button>
+              </div>
+            </div>
+            <div class="ctrl-section">
+              <label class="ctrl-label" for="threedStrength">
+                Reduction <span class="ctrl-value" id="threedStrengthValue">50</span>%
+              </label>
+              <input type="range" id="threedStrength" class="ctrl-range" min="10" max="90" value="50" />
+            </div>
+            <button class="btn btn-primary btn-full" id="threedBtn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+              Apply 3D Compression
+            </button>
+          </div>
+
+          <!-- UTILITY BUTTONS (always visible) -->
+          <div class="util-strip">
+            <button class="util-btn" onclick="undo()" title="Undo" aria-label="Undo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.05"/></svg>
+              Undo
+            </button>
+            <button class="util-btn" onclick="redo()" title="Redo" aria-label="Redo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-4.05"/></svg>
+              Redo
+            </button>
+            <button class="util-btn" onclick="retryLastOperation()" title="Retry" aria-label="Retry last operation">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+              Retry
+            </button>
+            <button class="util-btn util-btn-danger" onclick="cancelOperation()" title="Cancel" aria-label="Cancel operation">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Cancel
+            </button>
+          </div>
+        </aside>
+
+        <!-- CANVAS AREA -->
+        <div class="canvas-area">
+
+          <!-- IMAGE COMPARISON -->
+          <div class="canvas-grid" id="imageComparison" hidden>
+            <div class="canvas-card">
+              <div class="canvas-card-hdr">
+                <span class="canvas-card-title">Original</span>
+                <div class="canvas-card-meta" id="originalMeta">
+                  <span id="originalSize">—</span>
+                  <span id="originalDimensions">—</span>
+                </div>
+              </div>
+              <div class="canvas-wrap">
+                <canvas id="originalCanvas" aria-label="Original image"></canvas>
+                <div class="canvas-placeholder" id="origPlaceholder" aria-hidden="true">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="canvas-card canvas-card-result">
+              <div class="canvas-card-hdr">
+                <span class="canvas-card-title" id="processedTitle">Compressed</span>
+                <div class="canvas-card-meta">
+                  <span id="compressedSize">—</span>
+                  <span id="compressedDimensions">—</span>
+                </div>
+              </div>
+              <div class="canvas-wrap">
+                <canvas id="compressedCanvas" aria-label="Processed image"></canvas>
+                <div class="canvas-placeholder" id="compPlaceholder" aria-hidden="true">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <p>Process an image to see result</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3D VIEWER -->
+          <div class="canvas-grid" id="threedViewer" hidden>
+            <div class="canvas-card">
+              <div class="canvas-card-hdr">
+                <span class="canvas-card-title">Original 3D</span>
+                <div class="canvas-card-meta">
+                  <span id="originalVertices">—</span>
+                  <span id="originalFaces">—</span>
+                  <span id="original3DSize">—</span>
+                </div>
+              </div>
+              <div class="canvas-wrap canvas-wrap-3d">
+                <canvas id="originalCanvas3D" width="500" height="400" aria-label="Original 3D model"></canvas>
+              </div>
+            </div>
+            <div class="canvas-card canvas-card-result">
+              <div class="canvas-card-hdr">
+                <span class="canvas-card-title">Compressed 3D</span>
+                <div class="canvas-card-meta">
+                  <span id="compressedVertices">—</span>
+                  <span id="compressedFaces">—</span>
+                  <span id="compressed3DSize">—</span>
+                </div>
+              </div>
+              <div class="canvas-wrap canvas-wrap-3d">
+                <canvas id="compressedCanvas3D" width="500" height="400" aria-label="Compressed 3D model"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- METRICS -->
+          <div class="metrics-bar" id="metricsBar" hidden>
+            <div class="metric-pill" id="m-reduction">
+              <span class="metric-pill-label">Reduction</span>
+              <span class="metric-pill-val" id="sizeReduction">—</span>
+            </div>
+            <div class="metric-pill" id="m-ratio">
+              <span class="metric-pill-label">Ratio</span>
+              <span class="metric-pill-val" id="compressionRatio">—</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-pill-label">Original</span>
+              <span class="metric-pill-val" id="originalSizeMetric">—</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-pill-label">Result</span>
+              <span class="metric-pill-val" id="compressedSizeMetric">—</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-pill-label">Time</span>
+              <span class="metric-pill-val" id="processingTime">—</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-pill-label">PSNR</span>
+              <span class="metric-pill-val" id="psnr">—</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-pill-label">bpp</span>
+              <span class="metric-pill-val" id="bitsPerPixel">—</span>
+            </div>
+            <div class="metric-pill" id="recoveryCard" hidden>
+              <span class="metric-pill-label">Recovery</span>
+              <span class="metric-pill-val" id="recoveryRate">—</span>
+            </div>
+            <div class="metric-pill" id="vertexReductionCard" hidden>
+              <span class="metric-pill-label">Verts↓</span>
+              <span class="metric-pill-val" id="vertexReduction">—</span>
+            </div>
+            <div class="metric-pill" id="faceReductionCard" hidden>
+              <span class="metric-pill-label">Faces↓</span>
+              <span class="metric-pill-val" id="faceReduction">—</span>
+            </div>
+            <div class="metric-pill" id="hausdorffCard" hidden>
+              <span class="metric-pill-label">Hausdorff</span>
+              <span class="metric-pill-val" id="hausdorffDistance">—</span>
+            </div>
+            <div class="metric-pill" id="rmsErrorCard" hidden>
+              <span class="metric-pill-label">RMS Err</span>
+              <span class="metric-pill-val" id="rmsError">—</span>
+            </div>
+            <div class="metric-pill" id="normalDevCard" hidden>
+              <span class="metric-pill-label">Normal Dev</span>
+              <span class="metric-pill-val" id="normalDeviation">—</span>
+            </div>
+            <div class="metric-pill" id="volumeChangeCard" hidden>
+              <span class="metric-pill-label">Volume Δ</span>
+              <span class="metric-pill-val" id="volumeChange">—</span>
+            </div>
+            <div class="metric-pill" id="qualityScoreCard" hidden>
+              <span class="metric-pill-label">Quality</span>
+              <span class="metric-pill-val" id="qualityScore">—</span>
+            </div>
+          </div>
+
+          <!-- ACTION ROW -->
+          <div class="action-row" id="actionRow" hidden>
+            <button class="btn btn-success" id="downloadBtn" type="button">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+            </button>
+            <button class="btn btn-secondary" onclick="toggleZoom()" type="button">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              Zoom 2×
+            </button>
+            <button class="btn btn-secondary" onclick="exportReport()" type="button">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Export Report
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BATCH SECTION -->
+    <section class="section-card" id="batchSection">
+      <h2 class="section-title">Batch Processing</h2>
+      <p class="section-sub">Drop multiple images to compress them all at once</p>
+      <div class="batch-zone" id="batchUploadArea" role="button" tabindex="0" aria-label="Drop multiple images for batch processing">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 0h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span>Drop images here or click to select</span>
+        <input type="file" id="batchFileInput" accept="image/*" multiple hidden aria-label="Batch file input" />
+      </div>
+      <div id="batchResults" class="batch-results" hidden></div>
+    </section>
+
+    <!-- INFO SECTION -->
+    <section class="section-card" id="infoSection">
+      <h2 class="section-title">Compression Techniques</h2>
+      <div class="info-grid">
+        <div class="info-card"><h3>JPEG</h3><p>Lossy compression removing fine details. Lower quality = smaller file with more artifacts.</p></div>
+        <div class="info-card"><h3>WebP</h3><p>Modern format with superior compression ratios. Supports both lossy and lossless modes.</p></div>
+        <div class="info-card"><h3>AVIF</h3><p>Next-gen format. Better than WebP with smaller file sizes and wider color gamut support.</p></div>
+        <div class="info-card"><h3>Progressive JPEG</h3><p>Multi-pass encoding that loads gradually from low to high quality, improving perceived load speed.</p></div>
+        <div class="info-card"><h3>Chroma Subsampling</h3><p>4:2:0 reduces color info while preserving luminance, exploiting human visual perception.</p></div>
+        <div class="info-card"><h3>Color Quantization</h3><p>Reduces the number of distinct colors, decreasing file size while maintaining visual appearance.</p></div>
+        <div class="info-card"><h3>Grayscale</h3><p>Converts to grayscale using luminance formula, reducing color data by 66%.</p></div>
+        <div class="info-card"><h3>Floyd-Steinberg Dithering</h3><p>Error diffusion creates the illusion of color depth with a limited palette via spatial dithering.</p></div>
+        <div class="info-card"><h3>Run-Length Encoding</h3><p>Compresses consecutive identical pixels into count-value pairs. Effective for uniform areas.</p></div>
+        <div class="info-card"><h3>K-means Clustering</h3><p>ML-based color reduction finding an optimal palette while preserving image quality.</p></div>
+        <div class="info-card"><h3>⬡ Mesh Simplification</h3><p>Reduces polygon count of 3D models (OBJ, STL, PLY) using QEM vertex clustering.</p></div>
+        <div class="info-card"><h3>☁ Point Cloud Decimation</h3><p>Voxel grid downsampling groups nearby points and keeps their centroid, removing redundant data.</p></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── TOAST CONTAINER ────────────────────────────────── -->
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── PROGRESS OVERLAY ───────────────────────────────── -->
+  <div class="progress-overlay" id="progressOverlay" hidden>
+    <div class="progress-modal">
+      <p class="progress-msg" id="progressMsg">Processing…</p>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Compress &amp; Compare — Educational Compression Lab &copy; 2025</p>
+  </footer>
+
+  <script src="script-v2.js" defer></script>
+  <script src="script3d-v2.js" defer></script>
+</body>
+</html>

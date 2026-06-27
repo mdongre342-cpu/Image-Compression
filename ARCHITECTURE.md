@@ -1,0 +1,616 @@
+# 🏗️ System Architecture - Compression & Decompression
+
+## 📐 High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     USER INTERFACE LAYER                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Upload     │  │  Mode Toggle │  │   Display    │          │
+│  │   Area       │  │  Compress/   │  │   Canvas     │          │
+│  │              │  │  Decompress  │  │   (x2)       │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                   │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              Control Panel                                │  │
+│  │  ┌─────────────────┐  ┌─────────────────┐               │  │
+│  │  │  Compression    │  │  Decompression  │               │  │
+│  │  │  Controls       │  │  Controls       │               │  │
+│  │  │  (11 types)     │  │  (5 types)      │               │  │
+│  │  └─────────────────┘  └─────────────────┘               │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                   │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              Metrics Display                              │  │
+│  │  [Size] [Ratio] [PSNR] [Time] [BPP] [Recovery]          │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    PROCESSING ENGINE LAYER                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌────────────────────────┐  ┌────────────────────────┐        │
+│  │  Compression Module    │  │  Decompression Module  │        │
+│  ├────────────────────────┤  ├────────────────────────┤        │
+│  │ • JPEG                 │  │ • Auto-Detect          │        │
+│  │ • WebP                 │  │ • RLE Decompress       │        │
+│  │ • AVIF                 │  │ • K-means Decompress   │        │
+│  │ • Progressive JPEG     │  │ • Dequantize Colors    │        │
+│  │ • Chroma Subsampling   │  │ • Generic Enhancement  │        │
+│  │ • Color Quantization   │  │                        │        │
+│  │ • Grayscale            │  │                        │        │
+│  │ • Dithering            │  │                        │        │
+│  │ • RLE                  │  │                        │        │
+│  │ • K-means              │  │                        │        │
+│  │ • Resize & Compress    │  │                        │        │
+│  └────────────────────────┘  └────────────────────────┘        │
+│                                                                   │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              Metadata System                              │  │
+│  │  • Store compression parameters                          │  │
+│  │  • Track algorithm used                                  │  │
+│  │  • Enable auto-detection                                 │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                   │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              Metrics Calculator                           │  │
+│  │  • Size reduction / increase                             │  │
+│  │  • Compression ratio                                     │  │
+│  │  • PSNR calculation                                      │  │
+│  │  • Recovery rate                                         │  │
+│  │  • Processing time                                       │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                      DATA STORAGE LAYER                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Original   │  │  Compressed  │  │   History    │          │
+│  │   Image      │  │  Image       │  │   Stack      │          │
+│  │   Data       │  │  Data        │  │   (Undo/Redo)│          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │  Compression │  │  Comparison  │  │   Analytics  │          │
+│  │  Metadata    │  │  History     │  │   Data       │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔄 Data Flow Diagrams
+
+### Compression Flow
+
+```
+┌─────────┐
+│  User   │
+│ Uploads │
+│  Image  │
+└────┬────┘
+     │
+     ↓
+┌─────────────────┐
+│  File Handler   │
+│  • Validate     │
+│  • Load Image   │
+│  • Create Canvas│
+└────┬────────────┘
+     │
+     ↓
+┌─────────────────┐
+│ User Selects    │
+│ Compression     │
+│ Type & Quality  │
+└────┬────────────┘
+     │
+     ↓
+┌─────────────────────────────────────┐
+│     Compression Algorithm           │
+│  ┌─────────────────────────────┐   │
+│  │  Process Image Data         │   │
+│  │  • Apply algorithm          │   │
+│  │  • Generate compressed data │   │
+│  │  • Store metadata           │   │
+│  └─────────────────────────────┘   │
+└────┬────────────────────────────────┘
+     │
+     ↓
+┌─────────────────┐
+│ Calculate       │
+│ Metrics         │
+│ • Size          │
+│ • PSNR          │
+│ • Ratio         │
+└────┬────────────┘
+     │
+     ↓
+┌─────────────────┐
+│ Display Results │
+│ • Show canvas   │
+│ • Show metrics  │
+│ • Enable download│
+└─────────────────┘
+```
+
+### Decompression Flow
+
+```
+┌─────────┐
+│  User   │
+│ Uploads │
+│Compressed│
+│  Image  │
+└────┬────┘
+     │
+     ↓
+┌─────────────────┐
+│  File Handler   │
+│  • Load Image   │
+│  • Extract      │
+│    Metadata     │
+└────┬────────────┘
+     │
+     ↓
+┌─────────────────┐
+│ User Switches   │
+│ to Decompress   │
+│ Mode            │
+└────┬────────────┘
+     │
+     ↓
+┌─────────────────────────────────────┐
+│     Decompression Algorithm         │
+│  ┌─────────────────────────────┐   │
+│  │  Auto-Detect or Manual      │   │
+│  │  • Identify compression     │   │
+│  │  • Apply decompression      │   │
+│  │  • Enhance quality          │   │
+│  └─────────────────────────────┘   │
+└────┬────────────────────────────────┘
+     │
+     ↓
+┌─────────────────┐
+│ Calculate       │
+│ Metrics         │
+│ • Recovery rate │
+│ • PSNR          │
+│ • Size increase │
+└────┬────────────┘
+     │
+     ↓
+┌─────────────────┐
+│ Display Results │
+│ • Show enhanced │
+│ • Show metrics  │
+│ • Enable download│
+└─────────────────┘
+```
+
+---
+
+## 🎯 Algorithm Selection Logic
+
+```
+                    ┌─────────────┐
+                    │  User Input │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │ Current Mode?│
+                    └──────┬──────┘
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+         ┌────▼────┐              ┌────▼────┐
+         │Compress │              │Decompress│
+         │  Mode   │              │   Mode   │
+         └────┬────┘              └────┬─────┘
+              │                        │
+    ┌─────────┴─────────┐    ┌────────┴────────┐
+    │                   │    │                 │
+┌───▼───┐         ┌────▼────┐ │           ┌────▼────┐
+│ JPEG  │         │  WebP   │ │           │  Auto   │
+│ 80%   │         │  95%    │ │           │ Detect  │
+└───┬───┘         └────┬────┘ │           └────┬────┘
+    │                  │      │                │
+    ↓                  ↓      │                ↓
+┌────────┐        ┌────────┐  │         ┌──────────┐
+│Compress│        │Compress│  │         │ Extract  │
+│ JPEG   │        │ WebP   │  │         │Metadata  │
+└───┬────┘        └───┬────┘  │         └────┬─────┘
+    │                 │       │              │
+    └────────┬────────┘       │         ┌────▼─────┐
+             │                │         │ Select   │
+             ↓                │         │Algorithm │
+      ┌──────────┐            │         └────┬─────┘
+      │ Store    │            │              │
+      │ Metadata │            │         ┌────▼─────┐
+      └──────────┘            │         │Decompress│
+                              │         └──────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │                   │
+              ┌─────▼─────┐       ┌─────▼─────┐
+              │    RLE    │       │  K-means  │
+              │ Decompress│       │ Decompress│
+              └─────┬─────┘       └─────┬─────┘
+                    │                   │
+                    └─────────┬─────────┘
+                              │
+                              ↓
+                       ┌──────────┐
+                       │  Output  │
+                       │  Result  │
+                       └──────────┘
+```
+
+---
+
+## 🔧 Component Interaction
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                    Main Application                         │
+│                                                             │
+│  ┌──────────────┐         ┌──────────────┐                │
+│  │   UI Layer   │◄───────►│  Event       │                │
+│  │              │         │  Handlers    │                │
+│  └──────┬───────┘         └──────┬───────┘                │
+│         │                        │                         │
+│         │                        │                         │
+│  ┌──────▼────────────────────────▼───────┐                │
+│  │      State Management                 │                │
+│  │  • currentMode                        │                │
+│  │  • originalImage                      │                │
+│  │  • compressedDataURL                  │                │
+│  │  • compressionMetadata                │                │
+│  │  • undoStack / redoStack              │                │
+│  └──────┬────────────────────────────────┘                │
+│         │                                                  │
+│         │                                                  │
+│  ┌──────▼────────────────────────────────┐                │
+│  │      Processing Layer                 │                │
+│  │  ┌────────────┐  ┌────────────┐      │                │
+│  │  │ Compress   │  │ Decompress │      │                │
+│  │  │ Engine     │  │ Engine     │      │                │
+│  │  └─────┬──────┘  └─────┬──────┘      │                │
+│  │        │                │             │                │
+│  │        └────────┬───────┘             │                │
+│  │                 │                     │                │
+│  │         ┌───────▼────────┐            │                │
+│  │         │  Canvas API    │            │                │
+│  │         │  Image Data    │            │                │
+│  │         └───────┬────────┘            │                │
+│  └─────────────────┼─────────────────────┘                │
+│                    │                                       │
+│  ┌─────────────────▼─────────────────────┐                │
+│  │      Metrics & Analytics              │                │
+│  │  • calculateMetrics()                 │                │
+│  │  • calculateQualityMetrics()          │                │
+│  │  • calculateRecoveryRate()            │                │
+│  │  • viewAnalytics()                    │                │
+│  └───────────────────────────────────────┘                │
+│                                                             │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📊 State Machine
+
+```
+                    ┌─────────────┐
+                    │   Initial   │
+                    │    State    │
+                    └──────┬──────┘
+                           │
+                    [Upload Image]
+                           │
+                           ↓
+                    ┌─────────────┐
+                    │   Image     │
+                    │   Loaded    │
+                    └──────┬──────┘
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+       [Compress Mode]           [Decompress Mode]
+              │                         │
+              ↓                         ↓
+       ┌─────────────┐           ┌─────────────┐
+       │ Compressing │           │Decompressing│
+       └──────┬──────┘           └──────┬──────┘
+              │                         │
+       [Process Complete]        [Process Complete]
+              │                         │
+              ↓                         ↓
+       ┌─────────────┐           ┌─────────────┐
+       │ Compressed  │           │Decompressed │
+       │   Result    │           │   Result    │
+       └──────┬──────┘           └──────┬──────┘
+              │                         │
+              └────────────┬────────────┘
+                           │
+                    [Download or Reset]
+                           │
+                           ↓
+                    ┌─────────────┐
+                    │   Complete  │
+                    └─────────────┘
+```
+
+---
+
+## 🎨 UI State Transitions
+
+```
+Compress Mode Active:
+┌────────────────────────────────────┐
+│ [Compress] [Decompress]            │  ← Mode Toggle
+│  ▲ Active    Inactive               │
+├────────────────────────────────────┤
+│ Compression Settings               │  ← Title
+│ ┌────────────────────────────────┐ │
+│ │ Compression Type: [JPEG ▼]    │ │  ← Visible
+│ │ Quality: [========] 80%        │ │
+│ └────────────────────────────────┘ │
+│ [Apply Compression]                │  ← Visible
+├────────────────────────────────────┤
+│ Compressed Image                   │  ← Title
+│ [Canvas Display]                   │
+├────────────────────────────────────┤
+│ Compression Metrics                │  ← Title
+│ Size Reduction: 75%                │
+│ Recovery Rate: [Hidden]            │  ← Hidden
+└────────────────────────────────────┘
+
+                    ↓ [Switch Mode]
+
+Decompress Mode Active:
+┌────────────────────────────────────┐
+│ [Compress] [Decompress]            │  ← Mode Toggle
+│   Inactive    ▲ Active              │
+├────────────────────────────────────┤
+│ Decompression Settings             │  ← Title Changed
+│ ┌────────────────────────────────┐ │
+│ │ Decompression Type: [Auto ▼]  │ │  ← Visible
+│ └────────────────────────────────┘ │
+│ [Apply Decompression]              │  ← Visible
+├────────────────────────────────────┤
+│ Decompressed Image                 │  ← Title Changed
+│ [Canvas Display]                   │
+├────────────────────────────────────┤
+│ Decompression Metrics              │  ← Title Changed
+│ Size Increase: 25%                 │
+│ Recovery Rate: 92%                 │  ← Visible
+└────────────────────────────────────┘
+```
+
+---
+
+## 🔍 Algorithm Pipeline
+
+### Compression Pipeline
+
+```
+Input Image
+    │
+    ↓
+┌───────────────┐
+│ Load to Canvas│
+└───────┬───────┘
+        │
+        ↓
+┌───────────────┐
+│ Get ImageData │
+└───────┬───────┘
+        │
+        ↓
+┌───────────────────────────────┐
+│   Apply Algorithm             │
+│   ┌─────────────────────┐     │
+│   │ JPEG: Quality scale │     │
+│   │ WebP: Format convert│     │
+│   │ RLE: Quantize colors│     │
+│   │ K-means: Cluster    │     │
+│   └─────────────────────┘     │
+└───────┬───────────────────────┘
+        │
+        ↓
+┌───────────────┐
+│ Store Metadata│
+└───────┬───────┘
+        │
+        ↓
+┌───────────────┐
+│ toDataURL()   │
+└───────┬───────┘
+        │
+        ↓
+Output (Compressed)
+```
+
+### Decompression Pipeline
+
+```
+Input (Compressed Image)
+    │
+    ↓
+┌───────────────┐
+│ Load to Canvas│
+└───────┬───────┘
+        │
+        ↓
+┌───────────────┐
+│ Get ImageData │
+└───────┬───────┘
+        │
+        ↓
+┌───────────────┐
+│Extract Metadata│
+└───────┬───────┘
+        │
+        ↓
+┌───────────────────────────────┐
+│   Apply Algorithm             │
+│   ┌─────────────────────┐     │
+│   │ RLE: Add noise      │     │
+│   │ K-means: Smooth     │     │
+│   │ Dequantize: Filter  │     │
+│   │ Enhance: Sharpen    │     │
+│   └─────────────────────┘     │
+└───────┬───────────────────────┘
+        │
+        ↓
+┌───────────────┐
+│ Put ImageData │
+└───────┬───────┘
+        │
+        ↓
+┌───────────────┐
+│ toDataURL()   │
+└───────┬───────┘
+        │
+        ↓
+Output (Decompressed)
+```
+
+---
+
+## 📦 Module Dependencies
+
+```
+index.html
+    │
+    ├─► styles-pro.css
+    │       │
+    │       └─► CSS Variables
+    │           • Colors
+    │           • Spacing
+    │           • Transitions
+    │
+    └─► script.js
+            │
+            ├─► Global Variables
+            │   • originalImage
+            │   • compressionMetadata
+            │   • currentMode
+            │
+            ├─► Event Handlers
+            │   • File upload
+            │   • Mode switching
+            │   • Button clicks
+            │
+            ├─► Compression Module
+            │   • 11 algorithms
+            │   • Metadata storage
+            │
+            ├─► Decompression Module
+            │   • 5 algorithms
+            │   • Auto-detection
+            │
+            ├─► Metrics Module
+            │   • Size calculation
+            │   • PSNR calculation
+            │   • Recovery rate
+            │
+            └─► Utility Functions
+                • formatBytes()
+                • sanitizeErrorMessage()
+                • showNotification()
+```
+
+---
+
+## 🎯 Feature Integration Map
+
+```
+                    Core Features
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+   Compression      Decompression    Advanced
+        │                │            Features
+        │                │                │
+    ┌───┴───┐        ┌───┴───┐       ┌───┴───┐
+    │       │        │       │       │       │
+  JPEG   WebP     RLE    K-means  Undo/  Progress
+  AVIF   Resize   Dequant Enhance Redo   Bars
+  etc.   etc.     etc.    etc.    etc.   etc.
+    │       │        │       │       │       │
+    └───┬───┘        └───┬───┘       └───┬───┘
+        │                │                │
+        └────────────────┼────────────────┘
+                         │
+                    Metrics System
+                         │
+                ┌────────┴────────┐
+                │                 │
+           Compression      Decompression
+            Metrics           Metrics
+                │                 │
+        ┌───────┴───────┐   ┌─────┴─────┐
+        │               │   │           │
+    Size Reduction  PSNR  Recovery  Size
+    Ratio          BPP   Rate      Increase
+```
+
+---
+
+## 🔄 Workflow Diagrams
+
+### Complete User Workflow
+
+```
+START
+  │
+  ↓
+Upload Image ──────────────────┐
+  │                            │
+  ↓                            │
+Choose Mode                    │
+  │                            │
+  ├─► Compress ────────────┐   │
+  │   │                    │   │
+  │   ↓                    │   │
+  │   Select Algorithm     │   │
+  │   │                    │   │
+  │   ↓                    │   │
+  │   Adjust Quality       │   │
+  │   │                    │   │
+  │   ↓                    │   │
+  │   Apply Compression ───┼───┤
+  │                        │   │
+  └─► Decompress ──────┐   │   │
+      │                │   │   │
+      ↓                │   │   │
+      Select Algorithm │   │   │
+      │                │   │   │
+      ↓                │   │   │
+      Apply Decompress─┴───┤   │
+                           │   │
+                           ↓   │
+                    View Results│
+                           │   │
+                           ↓   │
+                    Download    │
+                           │   │
+                           ↓   │
+                    Reset? ─────┘
+                           │
+                          END
+```
+
+---
+
+This architecture document provides a comprehensive visual overview of how the compression and decompression system works together! 🎉

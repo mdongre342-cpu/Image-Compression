@@ -1,0 +1,130 @@
+version: '3.8'
+
+# Production Docker Compose Configuration
+# For production deployment with security hardening and monitoring
+
+services:
+  app:
+    image: compress-compare:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: compress-compare-prod
+    
+    # Restart policy
+    restart: always
+    restart_policy:
+      condition: on-failure
+      delay: 5s
+      max_attempts: 5
+      window: 120s
+    
+    # Port mapping
+    ports:
+      - "3000:3000"
+    
+    # Environment configuration
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      DATA_DIR: /app/data
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://yourdomain.com}
+    
+    # Volume mounts
+    volumes:
+      - app-data:/app/data
+      - app-logs:/app/logs
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Network
+    networks:
+      - compress-network
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=compress-compare"
+
+  # Optional: Nginx reverse proxy for HTTPS and load balancing
+  nginx:
+    image: nginx:alpine
+    container_name: compress-compare-nginx
+    restart: always
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+    
+    depends_on:
+      - app
+    
+    networks:
+      - compress-network
+    
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+# Named volumes for persistence
+volumes:
+  app-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data
+  
+  app-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/logs
+  
+  nginx-cache:
+    driver: local
+
+# Network
+networks:
+  compress-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-compress

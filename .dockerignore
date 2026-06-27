@@ -1,0 +1,54 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Version control
+.vscode
+.venv
+
+# Node
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+.npm
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Development
+.env.local
+.env.development
+.env.test
+
+# Documentation (optional - remove if you want them in image)
+*.md
+README.md
+ARCHITECTURE.md
+FIXES_APPLIED.md
+*.docx
+
+# Project files
+.vscode/
+vercel.json
+script.js
+script3d.js
+styles-pro.css
+styles.css
+index.html
+
+# Data (will be mounted as volume)
+data/uploads/*
+data/downloads/*
+
+# Misc
+*.log
+.cache
+.turbo
+dist/
